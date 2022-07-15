@@ -2,53 +2,6 @@
 #' @importFrom Rcpp sourceCpp
 # ================================
 
-# GP-function main
-
-#' @export
-gp_main_slow <- function(x_train, y_train, x_star, tau,
-                         phi, nu, distance_matrix_train,
-                         get_sample =  FALSE) {
-
-  # Getting the distance matrix from x_train and x_star
-  distance_matrix_K_star <- distance_matrix(m1 = x_train, m2 = x_star)
-  distance_matrix_K_star_star <- symm_distance_matrix(m1 = x_star)
-
-  # Calculating the K elements from the covariance structure
-  n_train <- nrow(x_train)
-  K_y <- kernel_function(squared_distance_matrix = distance_matrix_train,
-                         nu = nu,
-                         phi = phi) + diag(x = 1/(tau), nrow = n_train)
-  K_diag <- is_diag_matrix(K_y)
-  K_star <- kernel_function(squared_distance_matrix = distance_matrix_K_star,
-                            nu = nu, phi = phi)
-
-  mu_star <- crossprod(K_star,solve(K_y,y_train))
-
-  # print(mu_star[1:5])
-
-  # Here the abs is because the smallest values that are coming from here are due to numerical approximations.
-  if(isTRUE(get_sample)) {
-
-    K_star_star <- kernel_function(squared_distance_matrix = distance_matrix_K_star_star,
-                                   nu = nu, phi = phi)
-
-    cov_star <- K_star_star - crossprod(K_star,solve(K_y,K_star))
-
-    # residuals_sample <- rMVN_var(mean = mu_star,Sigma = cov_star)
-
-    residuals_sample <- mvtnorm::rmvnorm(n = 1,mean = mu_star,sigma = cov_star)
-
-    # results <- list(mu_pred = residuals_sample, cov_pred = cov_star)
-    results <- list(mu_pred = unlist(residuals_sample))
-
-  } else {
-    results <- list(mu_pred = mu_star)
-  }
-
-  # ===============#
-  return(results)
-}
-
 
 # Function to create the the function K that will be used
 # in a Gaussian process (Andrew's Version)
