@@ -20,12 +20,11 @@ n_train <-50
 n_test <- 200
 n_mcmc <- 1500
 n_burn <- 500
-n_gp <- 10
+n_gp <- 1
 
 # Generating the data
 x_train <- seq(-pi,pi,length.out = n_train) %>% as.matrix
-# x_test <- seq(-pi,pi,length.out = n_test) %>% as.matrix
-x_test <- x_train
+x_test <- seq(-pi,pi,length.out = n_test) %>% as.matrix
 y_mean <- sin(x_train)
 y <- y_mean + rnorm(n = n_train,sd = 0.1)
 
@@ -55,9 +54,11 @@ pi_coverage(y = y,y_hat_post = main_result$y_test_hat,
 main_result$y_train_hat %>% apply(2,sd) %>% hist(main = "train-sd")
 main_result$y_test_hat %>% apply(2,sd) %>% hist(main = "test-sd")
 
-plot(x_test,y)
-points(x_train,main_result$y_train_hat %>% colMeans(), pch= 20, col = "blue")
+plot(x_test,sin(x_test), type = "l")
 points(x_test,main_result$y_test_hat %>% colMeans(),  pch= 20, col = "orange")
+points(x_train,main_result$y_train_hat %>% colMeans(), pch= 20, col = "blue")
+lines(x_train,sin(x_train), col ="blue")
+
 
 
 ```
