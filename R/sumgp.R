@@ -54,9 +54,9 @@ sumgp <- function(x_train,
       res <- y_scale - colSums(pred_train[-j,,drop = FALSE])
 
       # Calculating the sampled value for mu
-      mu <- update_mu(x_train = xscale_train,res = res,
-                      kappa = kappa, tau = tau,
-                      tau_mu = tau_mu, nu = nu , phi = phi)
+      # mu <- update_mu(x_train = xscale_train,res = res,
+      #                 kappa = kappa, tau = tau,
+      #                 tau_mu = tau_mu, nu = nu , phi = phi)
 
       psi_update <- update_psi(x_train = xscale_train,
                                res  = res, x_test = xscale_test,
@@ -125,35 +125,15 @@ update_psi <- function(x_train,res,x_test,
   sigma_gp_train <- (1-kappa)*omega_train-((1-kappa)^(2))*crossprod(omega_train,
                                                                   solve((diag(tau^(-1),nrow = nrow(x_train))+(1-kappa)*omega_train),omega_train))
 
-  # Getting the sample train
-  # sample_train <- rMVN_var(mean = mu_gp_train,Sigma = sigma_gp_train)
 
   # getting the train sample using a package
   sample_train <- mvnfast::rmvn(n = 1,mu = mu_gp_train,
                                 sigma = sigma_gp_train+diag(1e-9,nrow = length(mu_gp_train)))
 
+  sample_train <- matrix(sample_train,nrow = nrow(mu_train_vec))
   # Sampling now the test observations
-  mu_gp_test <- mu_test_vec + (1-kappa)*crossprod(omega_train_test,
-                                                solve((diag(tau^(-1),nrow = nrow(x_train))+(1-kappa)*omega_train),(res-mu_train_vec)))
-
-  sigma_gp_test <- (1-kappa)*omega_test-((1-kappa)^(2))*crossprod(omega_train_test,
-                                                                   solve((diag(tau^(-1),nrow = nrow(x_train))+(1-kappa)*omega_train),omega_train_test))
-
-  sample_test <- mvnfast::rmvn(n = 1,mu = mu_gp_test,
-                               sigma = sigma_gp_test+diag(1e-9,nrow = length(mu_gp_test)))
-
-
-  # Our older way to calculate the sample
-  # sample_test <- rMVN_var(mean = mu_gp_test,Sigma = sigma_gp_test)
-
-  if(!identical(mu_gp_test,mu_gp_train)){
-   print("THERE'S SOMETHING WRONG (MU)")
-  }
-
-  if(!identical(sigma_gp_test,sigma_gp_train)){
-    print("THERE'S SOMETHING WRONG (SIGMA)")
-  }
-
+  sample_test <- mu_test_vec + (1-kappa)*crossprod(omega_train_test,
+                                                solve((1-kappa)*omega_train+diag(1e-9,nrow = nrow(omega_train)),(sample_train-mu_train_vec)))
 
   # Returning the list of those two values
   return(list(sample_train = sample_train,
